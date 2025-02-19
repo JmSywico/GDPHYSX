@@ -1,7 +1,13 @@
 #version 330 core
-out vec4 FragColor; // Output variable for fragment color
+
+uniform sampler2D tex0;
+
+out vec4 FragColor;
+
+in vec2 texCoord;
 
 void main()
-{
-    FragColor = vec4(0.0f, 1.0f, 0.0f, 1.0f); // Green color
+{				     //R   G   B   A
+	//FragColor = vec4(0.53f, 0.81f, 0.80f, 1.0f);
+	FragColor = texture(tex0, texCoord);
 }
