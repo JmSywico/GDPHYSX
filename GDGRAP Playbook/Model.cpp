@@ -1,8 +1,8 @@
 // Model.cpp
 #include "Model.h"
 
-#define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
+
 
 Model::Model(const std::string& path) {
     LoadModel(path);
