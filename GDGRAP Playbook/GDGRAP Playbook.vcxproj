@@ -24,6 +24,7 @@
     <ProjectGuid>{a3e1e6ca-8f9d-499a-b8ab-1188acc100c2}</ProjectGuid>
     <RootNamespace>GDGRAPPlaybook</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>GDPHYSX</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
