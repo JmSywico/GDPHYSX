@@ -111,7 +111,7 @@ int main()
 	PhysicsParticle p1 = PhysicsParticle();
 
 	// Set initial position at the bottom (e.g., y = -900.0f)
-	p1.Position = MyVector(0.0f, -900.0f, 0.0f);
+	p1.Position = MyVector(0.0f, -700.0f, 0.0f);
 
 	// Set initial upward velocity (tune the value for desired height)
 	p1.Velocity = MyVector(20.0f, 135.0f, 0.0f);
@@ -121,17 +121,36 @@ int main()
 	RenderParticle rp1 = RenderParticle(&p1, &model, MyVector(1.0f, 0.0f, 0.0f));
 	renderParticles.emplace_back(&rp1);
 
+	PhysicsParticle p2 = PhysicsParticle();
+
+	p2.Position = MyVector(0.0f, -700.0f, 0.0f);
+
+	p2.Velocity = MyVector(-25.0f, 115.0f, 0.0f);
+
+	// p2.Velocity = MyVector(-20.0f, 125.0f, 20.0f); - This particle won't be seen in the current setup, as the camera is set to orthographic projection.
+
+	p2.mass = 1.0f;
+	pWorld.AddParticle(&p2);
+	RenderParticle rp2 = RenderParticle(&p2, &model, MyVector(0.0f, 1.0f, 0.0f));
+	renderParticles.emplace_back(&rp2);
+
+	PhysicsParticle p3 = PhysicsParticle();
+	p3.Position = MyVector(0.0f, -700.0f, 0.0f);
+	p3.Velocity = MyVector(-35.0f, 145.0f, 0.0f);
+	p3.mass = 1.0f;
+	pWorld.AddParticle(&p3);
+	RenderParticle rp3 = RenderParticle(&p3, &model, MyVector(0.0f, 0.0f, 1.0f));
+	renderParticles.emplace_back(&rp3);
+
 	/*
 	* ===========================================================
 	* ========================= Drag ============================
 	* ===========================================================
 	*/
-	
 	DragForceGenerator drag = DragForceGenerator(0.001f, 0.0001f);
 	pWorld.forceRegistry.Add(&p1, &drag);
-
-	/*DragForceGenerator drag = DragForceGenerator(0.00001f, 0.00001f);
-	pWorld.forceRegistry.Add(&p1, &drag);*/
+	pWorld.forceRegistry.Add(&p2, &drag);
+	pWorld.forceRegistry.Add(&p3, &drag);
 
 	/*
 	* ===========================================================
