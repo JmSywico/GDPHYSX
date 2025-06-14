@@ -21,6 +21,6 @@ namespace PhysicsWorld
 	private:
 		void UpdateParticleList();
 		//GravityForceGenerator Gravity = GravityForceGenerator(MyVector(0, -9.8f, 0)); //0, -9.8f, 0
-		GravityForceGenerator Gravity = GravityForceGenerator(MyVector(0, 0, 0)); //0, -9.8f, 0
+		GravityForceGenerator Gravity = GravityForceGenerator(MyVector(0, -280.0f, 0)); //0, -9.8f, 0
 	};
 }

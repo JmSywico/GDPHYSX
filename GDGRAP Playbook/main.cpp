@@ -30,6 +30,11 @@ float thetha = 0.0f, axis_x = 0.0f, axis_y = 1.0f, axis_z = 0.0f;
 // Model positions
 std::vector<glm::vec3> modelPositions;
 
+/*
+* ===========================================================
+* ====================== Key Input ==========================
+* ===========================================================
+*/
 void KeyCallback(GLFWwindow* window, int key, int, int action, int)
 {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
@@ -40,6 +45,11 @@ void KeyCallback(GLFWwindow* window, int key, int, int action, int)
 
 int main()
 {
+	/*
+	* ===========================================================
+	* ======================== Setup ============================
+	* ===========================================================
+	*/
 	if (!glfwInit())
 		return -1;
 
@@ -85,26 +95,45 @@ int main()
 	auto prev_time = curr_time;
 	std::chrono::nanoseconds curr_ns(0);
 
+	/*
+	* ===========================================================
+	* ==================== Physics World ========================
+	* ===========================================================
+	*/
 	PhysicsWorld::PhysicsWorld pWorld;
 	std::list<RenderParticle*> renderParticles;
 
-	auto p1 = PhysicsParticle();
-	p1.Position = MyVector(-900.0f, 700.0f, 0.0f);
 	/*
-	p1.Velocity = MyVector(5.0f, 0.0f, 0.0f);
-	p1.Acceleration = MyVector(0.0f, 0.0f, 0.0f);
+	* ===========================================================
+	* ======================= Particles =========================
+	* ===========================================================
 	*/
+	PhysicsParticle p1 = PhysicsParticle();
+
+	// Set initial position at the bottom (e.g., y = -900.0f)
+	p1.Position = MyVector(0.0f, -900.0f, 0.0f);
+
+	// Set initial upward velocity (tune the value for desired height)
+	p1.Velocity = MyVector(0.0f, 700.0f, 0.0f);
+
 	p1.mass = 1.0f;
 	pWorld.AddParticle(&p1);
-	auto rp1 = RenderParticle(&p1, &model, MyVector(1.0f, 0.0f, 0.0f));
+	RenderParticle rp1 = RenderParticle(&p1, &model, MyVector(1.0f, 0.0f, 0.0f));
 	renderParticles.emplace_back(&rp1);
 
 	/*
-	DragForceGenerator drag = DragForceGenerator(0.01f, 0.001f);
-	pWorld.forceRegistry.Add(&p1, &drag);
+	* ===========================================================
+	* ========================= Drag ============================
+	* ===========================================================
 	*/
+	DragForceGenerator drag = DragForceGenerator(0.001f, 0.0001f);
+	pWorld.forceRegistry.Add(&p1, &drag);
 
-
+	/*
+	* ===========================================================
+	* ===================== Main Program ========================
+	* ===========================================================
+	*/
 	while (!glfwWindowShouldClose(window))
 	{
 		curr_time = clock::now();
