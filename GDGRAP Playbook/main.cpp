@@ -8,12 +8,26 @@
 #include <chrono>
 #include <iostream>
 #include <random>
+#include <memory>
+#include <cmath>
 
 #include "Model.h"
 #include "RenderParticle.h"
 #include "Physics/DragForceGenerator.h"
 #include "Physics/PhysicsParticle.h"
 #include "Physics/PhysicsWorld.h"
+
+// Engine-level particle class
+class EngineParticle {
+public:
+    MyVector Position;
+    MyVector Velocity;
+    float Lifespan; // in seconds
+
+    EngineParticle(const MyVector& pos, const MyVector& vel, float lifespan)
+        : Position(pos), Velocity(vel), Lifespan(lifespan) {}
+    virtual ~EngineParticle() = default;
+};
 
 using namespace std::chrono_literals;
 constexpr std::chrono::nanoseconds timestep(16ms);
@@ -22,6 +36,17 @@ constexpr std::chrono::nanoseconds timestep(16ms);
 auto cameraPos = glm::vec3(0.0f, 0.0f, 10.0f);
 auto cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 auto cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+// Camera and control state
+float cameraYaw = 0.0f;   // Horizontal angle (Y axis)
+float cameraPitch = 0.0f; // Vertical angle (X axis)
+float cameraRadius = 1200.0f; // Increased radius for large scene
+glm::vec3 cameraTarget(0.0f, -400.0f, 0.0f); // Center of action
+bool isPerspective = false;
+bool isPaused = false;
+
+// Key state for smooth movement
+bool keyW = false, keyA = false, keyS = false, keyD = false;
 
 // Transformation settings
 float scale_x = 30.0f, scale_y = 30.0f, scale_z = 30.0f;
@@ -41,6 +66,22 @@ void KeyCallback(GLFWwindow* window, int key, int, int action, int)
 	{
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
 	}
+
+	// Projection swap
+	if (key == GLFW_KEY_1 && action == GLFW_PRESS)
+		isPerspective = false;
+	if (key == GLFW_KEY_2 && action == GLFW_PRESS)
+		isPerspective = true;
+
+	// Play/Pause
+	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+		isPaused = !isPaused;
+
+	// WASD for camera rotation (set key state)
+	if (key == GLFW_KEY_W) keyW = (action != GLFW_RELEASE);
+	if (key == GLFW_KEY_A) keyA = (action != GLFW_RELEASE);
+	if (key == GLFW_KEY_S) keyS = (action != GLFW_RELEASE);
+	if (key == GLFW_KEY_D) keyD = (action != GLFW_RELEASE);
 }
 
 int main()
@@ -53,7 +94,7 @@ int main()
 	if (!glfwInit())
 		return -1;
 
-	GLFWwindow* window = glfwCreateWindow(800, 800, "Gocomma Engine", nullptr, nullptr);
+	GLFWwindow* window = glfwCreateWindow(800, 800, "GoComma Engine", nullptr, nullptr);
 	if (!window)
 	{
 		glfwTerminate();
@@ -80,7 +121,7 @@ int main()
 	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragmentShader, 1, &frag, nullptr);
 	glCompileShader(fragmentShader);
-
+		
 	GLuint shaderProgram = glCreateProgram();
 	glAttachShader(shaderProgram, vertexShader);
 	glAttachShader(shaderProgram, fragmentShader);
@@ -101,46 +142,8 @@ int main()
 	* ===========================================================
 	*/
 	PhysicsWorld::PhysicsWorld pWorld;
-	std::list<RenderParticle*> renderParticles;
-
-	/*
-	* ===========================================================
-	* ======================= Particles =========================
-	* ===========================================================
-	*/
-	PhysicsParticle p1 = PhysicsParticle();
-
-	// Set initial position at the bottom (e.g., y = -900.0f)
-	p1.Position = MyVector(0.0f, -700.0f, 0.0f);
-
-	// Set initial upward velocity (tune the value for desired height)
-	p1.Velocity = MyVector(20.0f, 135.0f, 0.0f);
-
-	p1.mass = 1.0f;
-	pWorld.AddParticle(&p1);
-	RenderParticle rp1 = RenderParticle(&p1, &model, MyVector(1.0f, 0.0f, 0.0f));
-	renderParticles.emplace_back(&rp1);
-
-	PhysicsParticle p2 = PhysicsParticle();
-
-	p2.Position = MyVector(0.0f, -700.0f, 0.0f);
-
-	p2.Velocity = MyVector(-25.0f, 115.0f, 0.0f);
-
-	// p2.Velocity = MyVector(-20.0f, 125.0f, 20.0f); - This particle won't be seen in the current setup, as the camera is set to orthographic projection.
-
-	p2.mass = 1.0f;
-	pWorld.AddParticle(&p2);
-	RenderParticle rp2 = RenderParticle(&p2, &model, MyVector(0.0f, 1.0f, 0.0f));
-	renderParticles.emplace_back(&rp2);
-
-	PhysicsParticle p3 = PhysicsParticle();
-	p3.Position = MyVector(0.0f, -700.0f, 0.0f);
-	p3.Velocity = MyVector(-35.0f, 145.0f, 0.0f);
-	p3.mass = 1.0f;
-	pWorld.AddParticle(&p3);
-	RenderParticle rp3 = RenderParticle(&p3, &model, MyVector(0.0f, 0.0f, 1.0f));
-	renderParticles.emplace_back(&rp3);
+	std::list<std::unique_ptr<RenderParticle>> renderParticles;
+	std::list<std::unique_ptr<PhysicsParticle>> physicsParticles;
 
 	/*
 	* ===========================================================
@@ -148,9 +151,15 @@ int main()
 	* ===========================================================
 	*/
 	DragForceGenerator drag = DragForceGenerator(0.001f, 0.0001f);
-	pWorld.forceRegistry.Add(&p1, &drag);
-	pWorld.forceRegistry.Add(&p2, &drag);
-	pWorld.forceRegistry.Add(&p3, &drag);
+	
+	// Particle spawn timing
+	constexpr float spawnInterval = 0.5f; // seconds
+	float timeSinceLastSpawn = 0.0f;
+
+	// Random number generator for colors
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_real_distribution<float> colorDist(0.0f, 1.0f);
 
 	/*
 	* ===========================================================
@@ -161,39 +170,102 @@ int main()
 	{
 		curr_time = clock::now();
 		auto dur = std::chrono::duration_cast<std::chrono::nanoseconds>(curr_time - prev_time);
-		prev_time = curr_time;
+		float deltaTime = static_cast<float>(dur.count()) / 1e9f; // seconds
 
-		curr_ns += dur;
-
-		if (curr_ns >= timestep)
+		if (!isPaused)
 		{
-			auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(curr_ns);
-			curr_ns -= curr_ns;
-			pWorld.Update(static_cast<float>(ms.count()) / 100.0f);
+			prev_time = curr_time;
+			curr_ns += dur;
+			timeSinceLastSpawn += deltaTime;
 
+			// Only spawn particles if not paused
+			if (timeSinceLastSpawn >= spawnInterval)
+			{
+				timeSinceLastSpawn = 0.0f;
+
+				// Create EngineParticle for initialization
+				float vx = -30.0f + static_cast<float>(rand() % 60); // -30 to +30
+				float vy = 120.0f + static_cast<float>(rand() % 40); // 120 to 160
+				float lifespan = 5.0f; // Example: 5 seconds
+				EngineParticle ep(MyVector(0.0f, -700.0f, 0.0f), MyVector(vx, vy, 0.0f), lifespan);
+
+				// Create new PhysicsParticle using EngineParticle data
+				auto p = std::make_unique<PhysicsParticle>();
+				p->Position = ep.Position;
+				p->Velocity = ep.Velocity;
+				p->mass = 1.0f;
+
+				pWorld.AddParticle(p.get());
+				pWorld.forceRegistry.Add(p.get(), &drag);
+
+				// Generate random color
+				float r = colorDist(gen);
+				float g = colorDist(gen);
+				float b = colorDist(gen);
+
+				// Create RenderParticle with random color
+				auto rp = std::make_unique<RenderParticle>(p.get(), &model, MyVector(r, g, b));
+
+				// Store pointers to keep them alive
+				renderParticles.emplace_back(std::move(rp));
+				physicsParticles.emplace_back(std::move(p));
+			}
+
+			// Only update physics if not paused
+			if (curr_ns >= timestep)
+			{
+				auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(curr_ns);
+				curr_ns -= curr_ns;
+				pWorld.Update(static_cast<float>(ms.count()) / 100.0f);
+			}
+		}
+		else
+		{
+			// When paused, update prev_time so that time delta is zero when unpausing
+			prev_time = curr_time;
 		}
 
+		// --- Camera rotation and position update: always runs ---
+		const float yawSpeed = 1.5f;   // radians/sec
+		const float pitchSpeed = 1.0f; // radians/sec
+
+		if (keyA) cameraYaw += yawSpeed * deltaTime;
+		if (keyD) cameraYaw -= yawSpeed * deltaTime;
+		if (keyW) cameraPitch += pitchSpeed * deltaTime;
+		if (keyS) cameraPitch -= pitchSpeed * deltaTime;
+
+		if (cameraPitch > glm::radians(89.0f)) cameraPitch = glm::radians(89.0f);
+		if (cameraPitch < glm::radians(-89.0f)) cameraPitch = glm::radians(-89.0f);
+
+		cameraPos.x = cameraTarget.x + cameraRadius * cosf(cameraPitch) * sinf(cameraYaw);
+		cameraPos.y = cameraTarget.y + cameraRadius * sinf(cameraPitch);
+		cameraPos.z = cameraTarget.z + cameraRadius * cosf(cameraPitch) * cosf(cameraYaw);
+		cameraFront = glm::normalize(cameraTarget - cameraPos);
+
+		// --- Rendering (unchanged) ---
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		glm::mat4 projection = glm::ortho(-800.0f, 800.0f, -800.0f, 800.0f, 0.1f, 100.0f);
-		glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+		glm::mat4 projection;
+		if (isPerspective)
+			projection = glm::perspective(glm::radians(45.0f), 1.0f, 10.0f, 3000.0f);
+		else
+			projection = glm::ortho(-800.0f, 800.0f, -800.0f, 800.0f, 0.1f, 3000.0f);
 
-		for (auto i = renderParticles.begin(); i != renderParticles.end(); ++i)
+		glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
+
+		for (const auto& rp : renderParticles)
 		{
-			PhysicsParticle* particle = (*i)->particle;
+			PhysicsParticle* particle = rp->particle;
 			glm::vec3 updatedPos(particle->Position.x, particle->Position.y, particle->Position.z);
-			glm::mat4 model = glm::translate(identity_matrix, updatedPos);
-			model = glm::rotate(model, glm::radians(thetha), glm::vec3(axis_x, axis_y, axis_z));
-			model = glm::scale(model, glm::vec3(scale_x, scale_y, scale_z));
+			glm::mat4 modelMat = glm::translate(identity_matrix, updatedPos);
+			modelMat = glm::rotate(modelMat, glm::radians(thetha), glm::vec3(axis_x, axis_y, axis_z));
+			modelMat = glm::scale(modelMat, glm::vec3(scale_x, scale_y, scale_z));
 
-			glm::mat4 mvp = projection * view * model;
-			(*i)->Draw(shaderProgram, mvp);
+			glm::mat4 mvp = projection * view * modelMat;
+			rp->Draw(shaderProgram, mvp);
 		}
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
-
-	glfwTerminate();
-	return 0;
 }
