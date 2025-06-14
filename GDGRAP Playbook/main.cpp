@@ -114,7 +114,7 @@ int main()
 	p1.Position = MyVector(0.0f, -900.0f, 0.0f);
 
 	// Set initial upward velocity (tune the value for desired height)
-	p1.Velocity = MyVector(0.0f, 135.0f, 0.0f);
+	p1.Velocity = MyVector(20.0f, 135.0f, 0.0f);
 
 	p1.mass = 1.0f;
 	pWorld.AddParticle(&p1);
