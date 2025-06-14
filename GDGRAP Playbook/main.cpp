@@ -53,7 +53,7 @@ int main()
 	if (!glfwInit())
 		return -1;
 
-	GLFWwindow* window = glfwCreateWindow(1000, 1000, "PC01 Francis Obina", nullptr, nullptr);
+	GLFWwindow* window = glfwCreateWindow(800, 800, "Gocomma Engine", nullptr, nullptr);
 	if (!window)
 	{
 		glfwTerminate();
@@ -64,7 +64,7 @@ int main()
 	gladLoadGL();
 	glfwSetKeyCallback(window, KeyCallback);
 
-	glViewport(0, 0, 1000, 1000);
+	glViewport(0, 0, 800, 800);
 
 	// Load shaders
 	std::ifstream vertSrc("Shaders/sample.vert"), fragSrc("Shaders/sample.frag");
@@ -114,7 +114,7 @@ int main()
 	p1.Position = MyVector(0.0f, -900.0f, 0.0f);
 
 	// Set initial upward velocity (tune the value for desired height)
-	p1.Velocity = MyVector(0.0f, 700.0f, 0.0f);
+	p1.Velocity = MyVector(0.0f, 135.0f, 0.0f);
 
 	p1.mass = 1.0f;
 	pWorld.AddParticle(&p1);
@@ -126,8 +126,12 @@ int main()
 	* ========================= Drag ============================
 	* ===========================================================
 	*/
+	
 	DragForceGenerator drag = DragForceGenerator(0.001f, 0.0001f);
 	pWorld.forceRegistry.Add(&p1, &drag);
+
+	/*DragForceGenerator drag = DragForceGenerator(0.00001f, 0.00001f);
+	pWorld.forceRegistry.Add(&p1, &drag);*/
 
 	/*
 	* ===========================================================
@@ -146,13 +150,13 @@ int main()
 		{
 			auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(curr_ns);
 			curr_ns -= curr_ns;
-			pWorld.Update(static_cast<float>(ms.count()) / 1000.0f);
+			pWorld.Update(static_cast<float>(ms.count()) / 100.0f);
 
 		}
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		glm::mat4 projection = glm::ortho(-1000.0f, 1000.0f, -1000.0f, 1000.0f, 0.1f, 100.0f);
+		glm::mat4 projection = glm::ortho(-800.0f, 800.0f, -800.0f, 800.0f, 0.1f, 100.0f);
 		glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
 		for (auto i = renderParticles.begin(); i != renderParticles.end(); ++i)
