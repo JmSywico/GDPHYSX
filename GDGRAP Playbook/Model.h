@@ -1,4 +1,3 @@
-// Model.h
 #pragma once
 
 #include <glad/glad.h>
@@ -10,15 +9,18 @@
 #include <vector>
 #include <string>
 
-class Model {
+class Model
+{
 public:
-    Model(const std::string& path);
-    ~Model();
-    void Draw(GLuint shaderProgram, const glm::mat4& transformation_matrix);
+	glm::vec3 Color;
+	glm::vec3 Position;
+
+	Model(const std::string& path);
+	~Model();
+	void Draw(GLuint shaderProgram, const glm::mat4& transformation_matrix);
 
 private:
-    std::vector<GLuint> mesh_indices;
-    GLuint VAO, VBO, EBO;
-    void LoadModel(const std::string& path);
+	std::vector<GLuint> mesh_indices;
+	GLuint VAO, VBO, EBO;
+	void LoadModel(const std::string& path);
 };
-
