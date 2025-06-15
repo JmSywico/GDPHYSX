@@ -183,32 +183,31 @@ int main()
 			{
 				timeSinceLastSpawn = 0.0f;
 
-				// Create EngineParticle for initialization
-				float vx = -30.0f + static_cast<float>(rand() % 60); // -30 to +30
-				float vy = 120.0f + static_cast<float>(rand() % 40); // 120 to 160
-				float lifespan = 5.0f; // Example: 5 seconds
-				EngineParticle ep(MyVector(0.0f, -700.0f, 0.0f), MyVector(vx, vy, 0.0f), lifespan);
+				const int particlesPerSpawn = 10; // Number of particles to spawn at once
+				for (int i = 0; i < particlesPerSpawn; ++i)
+				{
+					float vx = -30.0f + static_cast<float>(rand() % 60); // -30 to +30
+					float vy = 120.0f + static_cast<float>(rand() % 40); // 120 to 160
+					float lifespan = 5.0f; // Example: 5 seconds
+					EngineParticle ep(MyVector(0.0f, -700.0f, 0.0f), MyVector(vx, vy, 0.0f), lifespan);
 
-				// Create new PhysicsParticle using EngineParticle data
-				auto p = std::make_unique<PhysicsParticle>();
-				p->Position = ep.Position;
-				p->Velocity = ep.Velocity;
-				p->mass = 1.0f;
+					auto p = std::make_unique<PhysicsParticle>();
+					p->Position = ep.Position;
+					p->Velocity = ep.Velocity;
+					p->mass = 1.0f;
 
-				pWorld.AddParticle(p.get());
-				pWorld.forceRegistry.Add(p.get(), &drag);
+					pWorld.AddParticle(p.get());
+					pWorld.forceRegistry.Add(p.get(), &drag);
 
-				// Generate random color
-				float r = colorDist(gen);
-				float g = colorDist(gen);
-				float b = colorDist(gen);
+					float r = colorDist(gen);
+					float g = colorDist(gen);
+					float b = colorDist(gen);
 
-				// Create RenderParticle with random color
-				auto rp = std::make_unique<RenderParticle>(p.get(), &model, MyVector(r, g, b));
+					auto rp = std::make_unique<RenderParticle>(p.get(), &model, MyVector(r, g, b));
 
-				// Store pointers to keep them alive
-				renderParticles.emplace_back(std::move(rp));
-				physicsParticles.emplace_back(std::move(p));
+					renderParticles.emplace_back(std::move(rp));
+					physicsParticles.emplace_back(std::move(p));
+				}
 			}
 
 			// Only update physics if not paused
