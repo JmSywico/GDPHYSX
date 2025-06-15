@@ -190,17 +190,17 @@ int main()
 				for (int i = 0; i < particlesPerSpawn; ++i)
 				{
 					float vx = vxDist(gen);
-					float vy = 150.0f + static_cast<float>(rand() % 80); // 150 to 230
-					float vz = vzDist(gen); // add Z spread
-					float scale = scaleDist(gen); // random radius/scale
-					float lifespan = lifespanDist(gen); // random lifespan
+					float vy = 150.0f + static_cast<float>(rand() % 80); 
+					float vz = vzDist(gen); 
+					float scale = scaleDist(gen); 
+					float lifespan = lifespanDist(gen); 
 					EngineParticle ep(MyVector(0.0f, -700.0f, 0.0f), MyVector(vx, vy, vz), lifespan);
 
 					auto p = std::make_unique<PhysicsParticle>();
 					p->Position = ep.Position;
 					p->Velocity = ep.Velocity;
 					p->mass = 1.0f;
-					p->damping = 0.9f; // Set damping
+					p->damping = 0.9f;
 
 					pWorld.AddParticle(p.get());
 					pWorld.forceRegistry.Add(p.get(), &drag);
@@ -231,8 +231,8 @@ int main()
 		}
 
 		// --- Camera rotation and position update: always runs ---
-		const float yawSpeed = 1.5f;   // radians/sec
-		const float pitchSpeed = 1.0f; // radians/sec
+		const float yawSpeed = 1.5f;   
+		const float pitchSpeed = 1.0f; 
 
 		if (keyA) cameraYaw += yawSpeed * deltaTime;
 		if (keyD) cameraYaw -= yawSpeed * deltaTime;
