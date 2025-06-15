@@ -156,10 +156,13 @@ int main()
 	constexpr float spawnInterval = 0.5f; // seconds
 	float timeSinceLastSpawn = 0.0f;
 
-	// Random number generator for colors
 	std::random_device rd;
 	std::mt19937 gen(rd());
 	std::uniform_real_distribution<float> colorDist(0.0f, 1.0f);
+	std::uniform_real_distribution<float> scaleDist(2.0f, 10.0f);
+	std::uniform_real_distribution<float> lifespanDist(1.0f, 10.0f);
+	std::uniform_real_distribution<float> vxDist(-80.0f, 80.0f);
+	std::uniform_real_distribution<float> vzDist(-40.0f, 40.0f); 
 
 	/*
 	* ===========================================================
@@ -186,15 +189,18 @@ int main()
 				const int particlesPerSpawn = 10; // Number of particles to spawn at once
 				for (int i = 0; i < particlesPerSpawn; ++i)
 				{
-					float vx = -30.0f + static_cast<float>(rand() % 60); // -30 to +30
-					float vy = 120.0f + static_cast<float>(rand() % 40); // 120 to 160
-					float lifespan = 5.0f; // Example: 5 seconds
-					EngineParticle ep(MyVector(0.0f, -700.0f, 0.0f), MyVector(vx, vy, 0.0f), lifespan);
+					float vx = vxDist(gen);
+					float vy = 150.0f + static_cast<float>(rand() % 80); // 150 to 230
+					float vz = vzDist(gen); // add Z spread
+					float scale = scaleDist(gen); // random radius/scale
+					float lifespan = lifespanDist(gen); // random lifespan
+					EngineParticle ep(MyVector(0.0f, -700.0f, 0.0f), MyVector(vx, vy, vz), lifespan);
 
 					auto p = std::make_unique<PhysicsParticle>();
 					p->Position = ep.Position;
 					p->Velocity = ep.Velocity;
 					p->mass = 1.0f;
+					p->damping = 0.9f; // Set damping
 
 					pWorld.AddParticle(p.get());
 					pWorld.forceRegistry.Add(p.get(), &drag);
