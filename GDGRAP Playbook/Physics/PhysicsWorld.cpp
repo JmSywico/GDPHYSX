@@ -1,7 +1,5 @@
 #include "PhysicsWorld.h"
 
-#include "Springs/Chain.h"
-
 void PhysicsWorld::AddParticle(PhysicsParticle* toAdd)
 {
 	this->Particles.push_back(toAdd);
@@ -19,9 +17,6 @@ void PhysicsWorld::Update(float time)
 		for (auto* p : Particles) p->Update(dt);
 		GenerateContacts();
 		if (!Contacts.empty()) contactResolver.ResolveContacts(Contacts, dt);
-
-		
-
 		time -= dt;
 	}
 }
@@ -45,10 +40,9 @@ void PhysicsWorld::UpdateParticleList()
 
 void PhysicsWorld::GenerateContacts()
 {
-
 	Contacts.clear();
-	for (std::list<ParticleLink*>::iterator i = Links.begin();
-		i != Links.end(); ++i)
+	for (auto i = Links.begin();
+	     i != Links.end(); ++i)
 	{
 		ParticleContact* contact = (*i)->GetContact();
 

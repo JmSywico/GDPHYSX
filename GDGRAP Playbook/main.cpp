@@ -9,7 +9,6 @@
 #include <iostream>
 #include <random>
 #include <memory>
-#include <cmath>
 #include <string>
 
 #include "Model.h"
@@ -72,7 +71,7 @@ std::vector<glm::vec3> modelPositions;
 
 /*
 * ===========================================================
-* ==================== Physics World ========================
+* =================== Initialization ========================
 * ===========================================================
 */
 //Particle containers
@@ -82,10 +81,10 @@ std::list<PhysicsParticle*> physicsParticles;
 std::list<float> particleScales;
 
 MyVector accumulatedAcceleration(0.f, 0.f, 0.f);
-	
+
 // Place anchors and particles for left (bungee) and right (chain)
 MyVector bungeeAnchor(-100, 100, 0); // Left side
-MyVector chainAnchor(100, 100, 0);   // Right side
+MyVector chainAnchor(100, 100, 0); // Right side
 
 PhysicsParticle bungeeParticle;
 PhysicsParticle chainParticle;
@@ -99,7 +98,7 @@ Chain* chainLink = nullptr;
 * ========================= Drag ============================
 * ===========================================================
 */
-//auto drag = DragForceGenerator(0.001f, 0.0001f);
+auto drag = DragForceGenerator(0.001f, 0.0001f);
 
 // Particle spawn timing
 constexpr float spawnInterval = 1.0f; // seconds
@@ -187,6 +186,12 @@ int main()
 	auto prev_time = curr_time;
 	std::chrono::nanoseconds curr_ns(0);
 
+	/*
+	* ===========================================================
+	* ===================== Particles ===========================
+	* ===========================================================
+	*/
+
 	bungeeParticle.Position = bungeeAnchor + MyVector(0, 100, 0);
 	bungeeParticle.mass = 1.0f;
 	bungeeParticle.damping = 0.98f;
@@ -218,8 +223,10 @@ int main()
 	*/
 	while (!glfwWindowShouldClose(window))
 	{
-		std::cout << "Chain Pos: " << chainParticle.Position.x << ", " << chainParticle.Position.y << ", " << chainParticle.Position.z
-			<< " Vel: " << chainParticle.Velocity.x << ", " << chainParticle.Velocity.y << ", " << chainParticle.Velocity.z << std::endl;
+		std::cout << "Chain Pos: " << chainParticle.Position.x << ", " << chainParticle.Position.y << ", " <<
+			chainParticle.Position.z
+			<< " Vel: " << chainParticle.Velocity.x << ", " << chainParticle.Velocity.y << ", " << chainParticle.
+			Velocity.z << std::endl;
 
 		curr_time = clock::now();
 		auto dur = std::chrono::duration_cast<std::chrono::nanoseconds>(curr_time - prev_time);
@@ -239,7 +246,6 @@ int main()
 				pWorld.Update(static_cast<float>(ms.count()) / 100.0f);
 				//contact.Resolve((float)ms.count() / 100.0f);
 			}
-
 		}
 		else
 		{
@@ -288,7 +294,6 @@ int main()
 
 			glm::mat4 mvp = projection * view * model;
 			(*i)->Draw(shaderProgram, mvp);
-
 		}
 
 		//// Create a temporary RenderParticle instance to call DrawLink

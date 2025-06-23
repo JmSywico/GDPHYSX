@@ -15,30 +15,32 @@
 #include <iostream>
 
 Chain::Chain(PhysicsParticle* particle, const MyVector& anchor, float maxLength, float restitution)
-    : particle(particle), anchor(anchor), maxLength(maxLength), restitution(restitution) {
+	: particle(particle), anchor(anchor), maxLength(maxLength), restitution(restitution)
+{
 }
 
-ParticleContact* Chain::GetContact() {
-    // Calculate the vector from anchor to particle
-    MyVector toParticle = particle->Position - anchor;
-    float length = toParticle.Magnitude();
+ParticleContact* Chain::GetContact()
+{
+	// Calculate the vector from anchor to particle
+	MyVector toParticle = particle->Position - anchor;
+	float length = toParticle.Magnitude();
 
-    // If within max length, no contact needed
-    if (length <= maxLength) return nullptr;
+	// If within max length, no contact needed
+	if (length <= maxLength) return nullptr;
 
-    // Otherwise, create a contact
-    ParticleContact* contact = new ParticleContact();
-    contact->particles[0] = particle;
-    contact->particles[1] = nullptr; // Anchor is fixed
+	// Otherwise, create a contact
+	auto contact = new ParticleContact();
+	contact->particles[0] = particle;
+	contact->particles[1] = nullptr; // Anchor is fixed
 
-    // The contact normal is from particle to anchor (direction to push particle back)
-    contact->contactNormal = toParticle.normalize() * -1.0f;
+	// The contact normal is from particle to anchor (direction to push particle back)
+	contact->contactNormal = toParticle.normalize() * -1.0f;
 
-    // Penetration depth is how much the chain is overstretched
-    contact->depth = length - maxLength;
+	// Penetration depth is how much the chain is overstretched
+	contact->depth = length - maxLength;
 
-    // Set restitution for bounce effect
-    contact->restitution = restitution;
+	// Set restitution for bounce effect
+	contact->restitution = restitution;
 
-    return contact;
+	return contact;
 }

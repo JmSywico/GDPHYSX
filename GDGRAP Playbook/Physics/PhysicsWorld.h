@@ -25,7 +25,6 @@ public:
 private:
 	void UpdateParticleList();
 	GravityForceGenerator Gravity = GravityForceGenerator(MyVector(0, -9.8f, 0)); //0, -9.8f, 0
-	//GravityForceGenerator Gravity = GravityForceGenerator(MyVector(0, 0, 0)); //0, -9.8f, 0
 
 	ContactResolver contactResolver = ContactResolver(100); // Max iterations, tolerance
 

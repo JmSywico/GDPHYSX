@@ -15,26 +15,26 @@
 #include "Bungee.h"
 
 Bungee::Bungee(const MyVector& anchor, float springConstant, float restLength)
-    : anchor(anchor), springConstant(springConstant), restLength(restLength)
+	: anchor(anchor), springConstant(springConstant), restLength(restLength)
 {
 }
 
 void Bungee::UpdateForce(PhysicsParticle* particle, float /*time*/)
 {
-    // Calculate vector from anchor to particle
-    MyVector force = particle->Position - anchor;
-    float length = force.magnitude();
+	// Calculate vector from anchor to particle
+	MyVector force = particle->Position - anchor;
+	float length = force.magnitude();
 
-    // Only apply force if stretched beyond rest length
-    if (length <= restLength) return;
+	// Only apply force if stretched beyond rest length
+	if (length <= restLength) return;
 
-    // Calculate magnitude of the force
-    float extension = length - restLength;
-    float magnitude = -springConstant * extension;
+	// Calculate magnitude of the force
+	float extension = length - restLength;
+	float magnitude = -springConstant * extension;
 
-    // Normalize direction and scale by magnitude
-    force = force.normalize() * magnitude;
+	// Normalize direction and scale by magnitude
+	force = force.normalize() * magnitude;
 
-    // Apply the force to the particle
-    particle->AddForce(force);
+	// Apply the force to the particle
+	particle->AddForce(force);
 }
