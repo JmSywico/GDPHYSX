@@ -1,11 +1,10 @@
 #version 330 core
 
-layout(location = 0) in vec3 aPos; // The position variable has attribute position 0
+layout(location = 0) in vec3 aPos;
 
-uniform mat4 transform; // Uniform variable for the transform matrix
+uniform mat4 MVP;
 
 void main()
 {
-    // Multiply the position by the transform matrix to get the final position
-    gl_Position = transform * vec4(aPos, 1.0);
+    gl_Position = MVP * vec4(aPos, 1.0);
 }

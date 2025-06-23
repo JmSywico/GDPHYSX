@@ -4,8 +4,6 @@
 
 void ParticleContact::Resolve(float time)
 {
-	std::cout << "[Contact] Resolving: depth=" << depth << " restitution=" << restitution << std::endl;
-
 	ResolveVelocity(time);
 	ResolveInterpenetration(time);
 }

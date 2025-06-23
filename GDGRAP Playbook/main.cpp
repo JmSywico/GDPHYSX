@@ -223,11 +223,6 @@ int main()
 	*/
 	while (!glfwWindowShouldClose(window))
 	{
-		std::cout << "Chain Pos: " << chainParticle.Position.x << ", " << chainParticle.Position.y << ", " <<
-			chainParticle.Position.z
-			<< " Vel: " << chainParticle.Velocity.x << ", " << chainParticle.Velocity.y << ", " << chainParticle.
-			Velocity.z << std::endl;
-
 		curr_time = clock::now();
 		auto dur = std::chrono::duration_cast<std::chrono::nanoseconds>(curr_time - prev_time);
 		float deltaTime = static_cast<float>(dur.count()) / 1e9f; // In seconds
@@ -292,24 +287,37 @@ int main()
 			model = glm::rotate(model, glm::radians(thetha), glm::vec3(axis_x, axis_y, axis_z));
 			model = glm::scale(model, glm::vec3(scale, scale, scale));
 
+			// Set MVP for the particle
 			glm::mat4 mvp = projection * view * model;
+			GLint mvpLoc = glGetUniformLocation(shaderProgram, "MVP");
+			glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, glm::value_ptr(mvp));
+
 			(*i)->Draw(shaderProgram, mvp);
+
+			// Set MVP for the line (no model transform, just world space)
+			glm::mat4 mvpLine = projection * view;
+			glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, glm::value_ptr(mvpLine));
+
+			// Draw the link (line) to the anchor
+			if (particle == &bungeeParticle)
+			{
+				(*i)->DrawLink(
+					glm::vec3(bungeeParticle.Position.x, bungeeParticle.Position.y, bungeeParticle.Position.z),
+					glm::vec3(bungeeAnchor.x, bungeeAnchor.y, bungeeAnchor.z),
+					shaderProgram,
+					mvpLine
+				);
+			}
+			else if (particle == &chainParticle)
+			{
+				(*i)->DrawLink(
+					glm::vec3(chainParticle.Position.x, chainParticle.Position.y, chainParticle.Position.z),
+					glm::vec3(chainAnchor.x, chainAnchor.y, chainAnchor.z),
+					shaderProgram,
+					mvpLine
+				);
+			}
 		}
-
-		//// Create a temporary RenderParticle instance to call DrawLink
-		//RenderParticle tempRenderParticle(nullptr, nullptr, MyVector(0.0f, 0.0f, 0.0f));
-
-		//// Draw bungee link (bungeeParticle to bungeeAnchor)
-		//tempRenderParticle.DrawLink(
-		//	glm::vec3(bungeeParticle.Position.x, bungeeParticle.Position.y, bungeeParticle.Position.z),
-		//	glm::vec3(bungeeAnchor.x, bungeeAnchor.y, bungeeAnchor.z)
-		//);
-
-		//// Draw chain link (chainParticle to chainAnchor)
-		//tempRenderParticle.DrawLink(
-		//	glm::vec3(chainParticle.Position.x, chainParticle.Position.y, chainParticle.Position.z),
-		//	glm::vec3(chainAnchor.x, chainAnchor.y, chainAnchor.z)
-		//);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
