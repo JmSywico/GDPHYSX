@@ -37,4 +37,11 @@ public:
 	MyVector& operator+=(const MyVector& force);
 	float magnitude() const;
 	MyVector normalize() const;
+
+	MyVector& operator-=(const MyVector& other) {
+		x -= other.x;
+		y -= other.y;
+		z -= other.z;
+		return *this;
+	}
 };

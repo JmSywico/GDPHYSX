@@ -13,6 +13,8 @@ public:
 
 	float damping = 1.0f; //Approximate drag 0.9f
 
+	//PhysicsParticle(float x, float y, float z) : Position(x, y, z), Velocity(0, 0, 0), Acceleration(0, 0, 0) {}
+
 protected:
 	void UpdatePosition(float time);
 	void UpdateVelocity(float time);
