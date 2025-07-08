@@ -1,10 +1,8 @@
-#ifndef P6PARTICLE_DEF
-#define P6PARTICLE_DEF
+#pragma once
 
 #include "MyVector.h"
 #include "PhysicsParticle.h"
 
-#endif
 class ForceGenerator
 {
 public:

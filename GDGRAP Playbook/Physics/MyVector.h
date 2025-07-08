@@ -27,10 +27,8 @@ public:
 
 	MyVector& operator*=(float scalar);
 
-	// Add this global operator for scalar multiplication
 	friend MyVector operator*(float scalar, const MyVector& vector);
 
-	// Conversion operator to glm::vec3
 	operator glm::vec3() const
 	{
 		return glm::vec3(x, y, z);
@@ -39,4 +37,11 @@ public:
 	MyVector& operator+=(const MyVector& force);
 	float magnitude() const;
 	MyVector normalize() const;
+
+	MyVector& operator-=(const MyVector& other) {
+		x -= other.x;
+		y -= other.y;
+		z -= other.z;
+		return *this;
+	}
 };

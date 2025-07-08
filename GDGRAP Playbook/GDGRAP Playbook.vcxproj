@@ -143,25 +143,41 @@
     <ClCompile Include="glad.c" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Model.cpp" />
+    <ClCompile Include="ParticleLink.cpp" />
+    <ClCompile Include="Physics\ContactResolver.cpp" />
     <ClCompile Include="Physics\DragForceGenerator.cpp" />
     <ClCompile Include="Physics\ForceGenerator.cpp" />
     <ClCompile Include="Physics\ForceRegistry.cpp" />
     <ClCompile Include="Physics\GravityForceGenerator.cpp" />
     <ClCompile Include="Physics\MyVector.cpp" />
+    <ClCompile Include="Physics\ParticleContact.cpp" />
     <ClCompile Include="Physics\PhysicsParticle.cpp" />
     <ClCompile Include="Physics\PhysicsWorld.cpp" />
+    <ClCompile Include="Physics\Springs\AnchoredSpring.cpp" />
+    <ClCompile Include="Physics\Springs\Bungee.cpp" />
+    <ClCompile Include="Physics\Springs\Chain.cpp" />
+    <ClCompile Include="Physics\Springs\ParticleSpring.cpp" />
     <ClCompile Include="RenderParticle.cpp" />
+    <ClCompile Include="Rod.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Model.h" />
+    <ClInclude Include="ParticleLink.h" />
+    <ClInclude Include="Physics\ContactResolver.h" />
     <ClInclude Include="Physics\DragForceGenerator.h" />
     <ClInclude Include="Physics\ForceGenerator.h" />
     <ClInclude Include="Physics\ForceRegistry.h" />
     <ClInclude Include="Physics\GravityForceGenerator.h" />
     <ClInclude Include="Physics\MyVector.h" />
+    <ClInclude Include="Physics\ParticleContact.h" />
     <ClInclude Include="Physics\PhysicsParticle.h" />
     <ClInclude Include="Physics\PhysicsWorld.h" />
+    <ClInclude Include="Physics\Springs\AnchoredSpring.h" />
+    <ClInclude Include="Physics\Springs\Bungee.h" />
+    <ClInclude Include="Physics\Springs\Chain.h" />
+    <ClInclude Include="Physics\Springs\ParticleSpring.h" />
     <ClInclude Include="RenderParticle.h" />
+    <ClInclude Include="Rod.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="tiny_obj_loader.h" />
   </ItemGroup>

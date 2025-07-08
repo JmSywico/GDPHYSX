@@ -15,5 +15,6 @@ public:
 	}
 
 	void Draw(GLuint shaderProgram, const glm::mat4& transformation_matrix);
+	void DrawLink(const glm::vec3& a, const glm::vec3& b, GLuint shaderProgram, const glm::mat4& mvp);
 
 };
