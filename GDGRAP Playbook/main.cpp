@@ -82,16 +82,12 @@ std::list<float> particleScales;
 
 MyVector accumulatedAcceleration(0.f, 0.f, 0.f);
 
-// Place anchors and particles for left (bungee) and right (chain)
-MyVector bungeeAnchor(-100, 100, 0); // Left side
-MyVector chainAnchor(100, 100, 0); // Right side
-
-PhysicsParticle bungeeParticle;
-PhysicsParticle chainParticle;
-
-// Links
-Bungee* bungeeForce = nullptr;
-Chain* chainLink = nullptr;
+// Newton's Cradle setup
+const int NUM_BALLS = 5;
+const float BALL_RADIUS = 20.0f;
+const float CABLE_LENGTH = 200.0f;
+std::vector<PhysicsParticle> cradleBalls;
+std::vector<MyVector> cradleAnchors;
 
 /*
 * ===========================================================
@@ -192,29 +188,23 @@ int main()
 	* ===========================================================
 	*/
 
-	bungeeParticle.Position = bungeeAnchor + MyVector(0, 100, 0);
-	bungeeParticle.mass = 1.0f;
-	bungeeParticle.damping = 0.98f;
-	bungeeParticle.Velocity = MyVector(0, 0, 0);
-	pWorld.AddParticle(&bungeeParticle);
+	cradleBalls.resize(NUM_BALLS);
+	float totalWidth = (NUM_BALLS - 1) * (BALL_RADIUS * 2);
+	float startX = -totalWidth / 2.0f;
 
-	chainParticle.Position = chainAnchor + MyVector(0, -100, 0);
-	chainParticle.mass = 1.0f;
-	chainParticle.damping = 0.98f;
-	chainParticle.Velocity = MyVector(80, 0, 0);
-	pWorld.AddParticle(&chainParticle);
+	for (int i = 0; i < NUM_BALLS; ++i)
+	{
+		float xPos = startX + i * (BALL_RADIUS * 2);
+		MyVector ballPosition(xPos, 0, 0);
+		MyVector anchorPosition(xPos, CABLE_LENGTH, 0);
 
-	// Create the bungee force generator
-	bungeeForce = new Bungee(bungeeAnchor, 40.0f, 400.0f); // example springConstant=40.0f
-	pWorld.forceRegistry.Add(&bungeeParticle, bungeeForce);
+		cradleBalls[i].Position = ballPosition;
+		cradleBalls[i].mass = 1.0f;
+		cradleBalls[i].damping = 0.99f;
+		cradleAnchors.push_back(anchorPosition);
 
-	// Add links to the world
-	chainLink = new Chain(&chainParticle, chainAnchor, 400.0f, 0.5f);
-	pWorld.Links.push_back(chainLink);
-
-	// Add to renderParticles
-	renderParticles.push_back(new RenderParticle(&bungeeParticle, &model, MyVector(1.0f, 0.0f, 0.0f)));
-	renderParticles.push_back(new RenderParticle(&chainParticle, &model, MyVector(1.0f, 1.0f, 0.0f)));
+		renderParticles.push_back(new RenderParticle(&cradleBalls[i], &model, MyVector(0.7f, 0.7f, 0.7f)));
+	}
 
 	/*
 	* ===========================================================
@@ -273,9 +263,10 @@ int main()
 		glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
 
 		auto individualScale = particleScales.begin();
+		int ballIndex = 0;
 		for (auto i = renderParticles.begin(); i != renderParticles.end(); ++i)
 		{
-			float scale = 20.0f;
+			float scale = BALL_RADIUS;
 			if (individualScale != particleScales.end())
 			{
 				scale = *individualScale;
@@ -299,24 +290,17 @@ int main()
 			glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, glm::value_ptr(mvpLine));
 
 			// Draw the link (line) to the anchor
-			if (particle == &bungeeParticle)
+			if (ballIndex < cradleAnchors.size())
 			{
+				MyVector anchorPos = cradleAnchors[ballIndex];
 				(*i)->DrawLink(
-					glm::vec3(bungeeParticle.Position.x, bungeeParticle.Position.y, bungeeParticle.Position.z),
-					glm::vec3(bungeeAnchor.x, bungeeAnchor.y, bungeeAnchor.z),
+					glm::vec3(particle->Position.x, particle->Position.y, particle->Position.z),
+					glm::vec3(anchorPos.x, anchorPos.y, anchorPos.z),
 					shaderProgram,
 					mvpLine
 				);
 			}
-			else if (particle == &chainParticle)
-			{
-				(*i)->DrawLink(
-					glm::vec3(chainParticle.Position.x, chainParticle.Position.y, chainParticle.Position.z),
-					glm::vec3(chainAnchor.x, chainAnchor.y, chainAnchor.z),
-					shaderProgram,
-					mvpLine
-				);
-			}
+			ballIndex++;
 		}
 
 		glfwSwapBuffers(window);
