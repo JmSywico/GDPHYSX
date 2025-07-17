@@ -10,6 +10,7 @@
 #include <random>
 #include <memory>
 #include <string>
+#include <limits> // Add this include for std::numeric_limits
 
 #include "Model.h"
 #include "RenderParticle.h"
@@ -84,8 +85,6 @@ MyVector accumulatedAcceleration(0.f, 0.f, 0.f);
 
 // Newton's Cradle setup
 const int NUM_BALLS = 5;
-const float BALL_RADIUS = 20.0f;
-const float CABLE_LENGTH = 200.0f;
 std::vector<PhysicsParticle> cradleBalls;
 std::vector<MyVector> cradleAnchors;
 
@@ -185,17 +184,44 @@ int main()
 
 	/*
 	* ===========================================================
+	* ===================== User Input ==========================
+	* ===========================================================
+	*/
+	float cableLength, particleGap, particleRadius, gravityStrength, applyForce;
+
+	std::cout << "Enter cable length: ";
+	std::cin >> cableLength;
+	std::cout << "Enter particle gap (center to center): ";
+	std::cin >> particleGap;
+	std::cout << "Enter particle radius: ";
+	std::cin >> particleRadius;
+	std::cout << "Enter gravity strength (negative for downward, e.g. -9.8): ";
+	std::cin >> gravityStrength;
+	std::cout << "Enter force to apply to the leftmost particle: ";
+	std::cin >> applyForce;
+	std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+	// Use user input for simulation parameters
+	const float CABLE_LENGTH = cableLength;
+	const float BALL_RADIUS = particleRadius;
+	const float PARTICLE_GAP = particleGap;
+
+	// Update gravity with user input
+	gravity = GravityForceGenerator(MyVector(0.0f, gravityStrength, 0.0f));
+
+	/*
+	* ===========================================================
 	* ===================== Particles ===========================
 	* ===========================================================
 	*/
 
 	cradleBalls.resize(NUM_BALLS);
-	float totalWidth = (NUM_BALLS - 1) * (BALL_RADIUS * 2);
+	float totalWidth = (NUM_BALLS - 1) * PARTICLE_GAP;
 	float startX = -totalWidth / 2.0f;
 
 	for (int i = 0; i < NUM_BALLS; ++i)
 	{
-		float xPos = startX + i * (BALL_RADIUS * 2);
+		float xPos = startX + i * PARTICLE_GAP;
 		MyVector ballPosition(xPos, 100, 0);
 		MyVector anchorPosition(xPos, CABLE_LENGTH, 0);
 
@@ -209,6 +235,9 @@ int main()
 		// Register the particle with the physics world
 		pWorld.AddParticle(&cradleBalls[i]);
 	}
+
+	// Apply force to the leftmost particle
+	cradleBalls[0].AddForce(MyVector(applyForce, 0.0f, 0.0f));
 
 	/*
 	* ===========================================================
