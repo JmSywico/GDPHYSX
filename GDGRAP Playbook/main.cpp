@@ -95,6 +95,7 @@ std::vector<MyVector> cradleAnchors;
 * ===========================================================
 */
 auto drag = DragForceGenerator(0.001f, 0.0001f);
+auto gravity = GravityForceGenerator(MyVector(0.0f, -9.8f, 0.0f)); // gravity in m/s^2
 
 // Particle spawn timing
 constexpr float spawnInterval = 1.0f; // seconds
@@ -195,7 +196,7 @@ int main()
 	for (int i = 0; i < NUM_BALLS; ++i)
 	{
 		float xPos = startX + i * (BALL_RADIUS * 2);
-		MyVector ballPosition(xPos, 0, 0);
+		MyVector ballPosition(xPos, 100, 0);
 		MyVector anchorPosition(xPos, CABLE_LENGTH, 0);
 
 		cradleBalls[i].Position = ballPosition;
@@ -204,6 +205,9 @@ int main()
 		cradleAnchors.push_back(anchorPosition);
 
 		renderParticles.push_back(new RenderParticle(&cradleBalls[i], &model, MyVector(0.7f, 0.7f, 0.7f)));
+
+		// Register the particle with the physics world
+		pWorld.AddParticle(&cradleBalls[i]);
 	}
 
 	/*
@@ -223,13 +227,36 @@ int main()
 			curr_ns += dur;
 			timeSinceLastSpawn += deltaTime;
 
+			// Apply gravity and drag to each ball
+			for (int i = 0; i < NUM_BALLS; ++i)
+			{
+				gravity.UpdateForce(&cradleBalls[i], deltaTime);
+				drag.UpdateForce(&cradleBalls[i], deltaTime);
+			}
 
 			if (curr_ns >= timestep)
 			{
 				auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(curr_ns);
 				curr_ns -= curr_ns;
 				pWorld.Update(static_cast<float>(ms.count()) / 100.0f);
-				//contact.Resolve((float)ms.count() / 100.0f);
+
+				// Enforce cable length constraint for each ball
+				for (size_t i = 0; i < cradleBalls.size(); ++i)
+				{
+					MyVector& pos = cradleBalls[i].Position;
+					const MyVector& anchor = cradleAnchors[i];
+					MyVector offset = pos - anchor;
+					float dist = offset.Magnitude();
+					if (dist > CABLE_LENGTH)
+					{
+						MyVector direction = offset.normalize();
+						pos = anchor + direction * CABLE_LENGTH;
+						MyVector& vel = cradleBalls[i].Velocity;
+						float velAlongCable = vel.ScalarProduct(direction);
+						if (velAlongCable > 0)
+							vel -= direction * velAlongCable;
+					}
+				}
 			}
 		}
 		else
