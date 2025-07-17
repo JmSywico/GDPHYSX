@@ -70,6 +70,10 @@ float thetha = 0.0f, axis_x = 0.0f, axis_y = 1.0f, axis_z = 0.0f;
 // Model positions
 std::vector<glm::vec3> modelPositions;
 
+// Force application state
+bool forceApplied = false;
+bool applyForceNextFrame = false;
+
 /*
 * ===========================================================
 * =================== Initialization ========================
@@ -93,7 +97,7 @@ std::vector<MyVector> cradleAnchors;
 * ========================= Drag ============================
 * ===========================================================
 */
-auto drag = DragForceGenerator(0.001f, 0.0001f);
+auto drag = DragForceGenerator(0.0f, 0.0f);
 auto gravity = GravityForceGenerator(MyVector(0.0f, -9.8f, 0.0f)); // gravity in m/s^2
 
 // Particle spawn timing
@@ -120,7 +124,10 @@ void KeyCallback(GLFWwindow* window, int key, int, int action, int)
 
 	// Play/Pause
 	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+	{
 		isPaused = !isPaused;
+		applyForceNextFrame = true; // Set flag to apply force on next frame
+	}
 
 	// WASD for camera rotation (set key state)
 	if (key == GLFW_KEY_W) keyW = (action != GLFW_RELEASE);
@@ -204,7 +211,7 @@ int main()
 	// Use user input for simulation parameters
 	const float CABLE_LENGTH = cableLength;
 	const float BALL_RADIUS = particleRadius;
-	const float PARTICLE_GAP = particleGap;
+	const float PARTICLE_GAP = 2.0f * BALL_RADIUS;
 
 	// Update gravity with user input
 	gravity = GravityForceGenerator(MyVector(0.0f, gravityStrength, 0.0f));
@@ -222,22 +229,18 @@ int main()
 	for (int i = 0; i < NUM_BALLS; ++i)
 	{
 		float xPos = startX + i * PARTICLE_GAP;
-		MyVector ballPosition(xPos, 100, 0);
 		MyVector anchorPosition(xPos, CABLE_LENGTH, 0);
 
-		cradleBalls[i].Position = ballPosition;
+		// Start at the anchor (top of cable)
+		cradleBalls[i].Position = anchorPosition;
 		cradleBalls[i].mass = 1.0f;
-		cradleBalls[i].damping = 0.99f;
+		cradleBalls[i].damping = 1.0f;
 		cradleAnchors.push_back(anchorPosition);
 
 		renderParticles.push_back(new RenderParticle(&cradleBalls[i], &model, MyVector(0.7f, 0.7f, 0.7f)));
 
-		// Register the particle with the physics world
 		pWorld.AddParticle(&cradleBalls[i]);
 	}
-
-	// Apply force to the leftmost particle
-	cradleBalls[0].AddForce(MyVector(applyForce, 0.0f, 0.0f));
 
 	/*
 	* ===========================================================
@@ -286,12 +289,57 @@ int main()
 							vel -= direction * velAlongCable;
 					}
 				}
+
+				 // Collision handling with multiple iterations
+				const int collisionIterations = 5; // More iterations for better propagation
+				for (int iter = 0; iter < collisionIterations; ++iter)
+				{
+					for (int i = 0; i < NUM_BALLS - 1; ++i)
+					{
+						float minDist = 2.0f * BALL_RADIUS;
+						MyVector delta = cradleBalls[i + 1].Position - cradleBalls[i].Position;
+						float dist = delta.Magnitude();
+						if (dist < minDist)
+						{
+							MyVector collisionNormal = delta.normalize();
+							float v1 = cradleBalls[i].Velocity.ScalarProduct(collisionNormal);
+							float v2 = cradleBalls[i + 1].Velocity.ScalarProduct(collisionNormal);
+
+							float restitution = 0.99f; // Nearly elastic
+
+							// Only transfer if balls are moving towards each other
+							if (v1 > v2)
+							{
+								// Calculate new velocities (1D elastic collision, equal mass)
+								float v1After = v2;
+								float v2After = v1;
+
+								cradleBalls[i].Velocity += (v1After - v1) * collisionNormal * restitution;
+								cradleBalls[i + 1].Velocity += (v2After - v2) * collisionNormal * restitution;
+							}
+
+							// Separate the balls so they are not overlapping
+							float overlap = minDist - dist;
+							cradleBalls[i].Position -= collisionNormal * (overlap * 0.5f);
+							cradleBalls[i + 1].Position += collisionNormal * (overlap * 0.5f);
+						}
+					}
+				}
 			}
 		}
 		else
 		{
 			prev_time = curr_time;
 		}
+
+		// Apply force only once when space is pressed
+		if (applyForceNextFrame && !forceApplied)
+		{
+			cradleBalls[0].AddForce(MyVector(applyForce, 0.0f, 0.0f));
+			forceApplied = true;
+			applyForceNextFrame = false;
+		}
+
 		constexpr float yawSpeed = 1.5f;
 		constexpr float pitchSpeed = 1.0f;
 
