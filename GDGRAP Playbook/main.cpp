@@ -247,8 +247,6 @@ int main()
 		pWorld.AddParticle(&cradleBalls[i]);
 	}
 
-	std::cout << "After init: Anchor 0 Y: " << cradleAnchors[0].y << ", Particle 0 Y: " << cradleBalls[0].Position.y << std::endl;
-
 	/*
 	* ===========================================================
 	* ===================== Main Program ========================
