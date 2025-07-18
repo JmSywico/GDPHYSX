@@ -10,7 +10,7 @@
 #include <random>
 #include <memory>
 #include <string>
-#include <limits> // Add this include for std::numeric_limits
+#include <limits> 
 
 #include "Model.h"
 #include "RenderParticle.h"
@@ -34,7 +34,7 @@ class EngineParticle
 public:
 	MyVector Position;
 	MyVector Velocity;
-	float Lifespan; // in seconds
+	float Lifespan;
 
 	EngineParticle(const MyVector& pos, const MyVector& vel, float lifespan)
 		: Position(pos), Velocity(vel), Lifespan(lifespan)
@@ -54,10 +54,10 @@ auto cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 auto cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 // Camera and control state
-float cameraYaw = 0.0f; // Horizontal angle (Y axis)
-float cameraPitch = 0.0f; // Vertical angle (X axis)
-float cameraRadius = 1200.0f; // Increased radius for large scene
-glm::vec3 cameraTarget(0.0f, 0, 0.0f); // Center of action
+float cameraYaw = 0.0f; 
+float cameraPitch = 0.0f; 
+float cameraRadius = 1200.0f;
+glm::vec3 cameraTarget(0.0f, 0, 0.0f); 
 bool isPerspective = false;
 bool isPaused = false;
 
@@ -98,10 +98,10 @@ std::vector<MyVector> cradleAnchors;
 * ===========================================================
 */
 auto drag = DragForceGenerator(0.0f, 0.0f);
-auto gravity = GravityForceGenerator(MyVector(0.0f, -9.8f, 0.0f)); // gravity in m/s^2
+auto gravity = GravityForceGenerator(MyVector(0.0f, -9.8f, 0.0f)); // make use of gravity in GravityForceGenerator
 
 // Particle spawn timing
-constexpr float spawnInterval = 1.0f; // seconds
+constexpr float spawnInterval = 1.0f; 
 float timeSinceLastSpawn = 0.0f;
 
 /*
@@ -116,7 +116,6 @@ void KeyCallback(GLFWwindow* window, int key, int, int action, int)
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
 	}
 
-	// Projection swap
 	if (key == GLFW_KEY_1 && action == GLFW_PRESS)
 		isPerspective = false;
 	if (key == GLFW_KEY_2 && action == GLFW_PRESS)
@@ -126,10 +125,9 @@ void KeyCallback(GLFWwindow* window, int key, int, int action, int)
 	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
 	{
 		isPaused = !isPaused;
-		applyForceNextFrame = true; // Set flag to apply force on next frame
+		applyForceNextFrame = true;
 	}
-
-	// WASD for camera rotation (set key state)
+	
 	if (key == GLFW_KEY_W) keyW = (action != GLFW_RELEASE);
 	if (key == GLFW_KEY_A) keyA = (action != GLFW_RELEASE);
 	if (key == GLFW_KEY_S) keyS = (action != GLFW_RELEASE);
@@ -194,7 +192,8 @@ int main()
 	* ===================== User Input ==========================
 	* ===========================================================
 	*/
-	float cableLength, particleGap, particleRadius, gravityStrength, applyForce;
+	float cableLength, particleGap, particleRadius, gravityStrength;
+	float forceX, forceY, forceZ;
 
 	std::cout << "Enter cable length: ";
 	std::cin >> cableLength;
@@ -204,8 +203,13 @@ int main()
 	std::cin >> particleRadius;
 	std::cout << "Enter gravity strength (negative for downward, e.g. -9.8): ";
 	std::cin >> gravityStrength;
-	std::cout << "Enter force to apply to the leftmost particle: ";
-	std::cin >> applyForce;
+	std::cout << "Apply Force\n";
+	std::cout << "X: ";
+	std::cin >> forceX;
+	std::cout << "Y: ";
+	std::cin >> forceY;
+	std::cout << "Z: ";
+	std::cin >> forceZ;
 	std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
 	// Use user input for simulation parameters
@@ -229,11 +233,12 @@ int main()
 	for (int i = 0; i < NUM_BALLS; ++i)
 	{
 		float xPos = startX + i * PARTICLE_GAP;
-		MyVector anchorPosition(xPos, CABLE_LENGTH, 0);
+		float anchorY = 0.0f; 
+		MyVector anchorPosition(xPos, anchorY, 0);
 
-		// Start at the anchor (top of cable)
-		cradleBalls[i].Position = anchorPosition;
-		cradleBalls[i].mass = 1.0f;
+		cradleBalls[i].Position = anchorPosition; // Start at anchor
+		cradleBalls[i].Velocity = MyVector(0, 0, 0);
+		cradleBalls[i].mass = 50.0f;
 		cradleBalls[i].damping = 1.0f;
 		cradleAnchors.push_back(anchorPosition);
 
@@ -241,6 +246,8 @@ int main()
 
 		pWorld.AddParticle(&cradleBalls[i]);
 	}
+
+	std::cout << "After init: Anchor 0 Y: " << cradleAnchors[0].y << ", Particle 0 Y: " << cradleBalls[0].Position.y << std::endl;
 
 	/*
 	* ===========================================================
@@ -251,13 +258,19 @@ int main()
 	{
 		curr_time = clock::now();
 		auto dur = std::chrono::duration_cast<std::chrono::nanoseconds>(curr_time - prev_time);
-		float deltaTime = static_cast<float>(dur.count()) / 1e9f; // In seconds
+		float deltaTime = static_cast<float>(dur.count()) / 1e9f; 
+
+		if (deltaTime > 0.1f) deltaTime = 1.0f / 120.0f;
+
+
 
 		if (!isPaused)
 		{
 			prev_time = curr_time;
 			curr_ns += dur;
 			timeSinceLastSpawn += deltaTime;
+
+			
 
 			// Apply gravity and drag to each ball
 			for (int i = 0; i < NUM_BALLS; ++i)
@@ -266,63 +279,65 @@ int main()
 				drag.UpdateForce(&cradleBalls[i], deltaTime);
 			}
 
-			if (curr_ns >= timestep)
+			const float fixedStep = 1.0f / 120.0f;
+			float timeToSimulate = deltaTime;
+			while (timeToSimulate > 0.0f) {
+				float step = std::min(fixedStep, timeToSimulate);
+				pWorld.Update(step);
+				timeToSimulate -= step;
+			}
+
+			// Enforce cable length constraint for each ball
+			for (size_t i = 0; i < cradleBalls.size(); ++i)
 			{
-				auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(curr_ns);
-				curr_ns -= curr_ns;
-				pWorld.Update(static_cast<float>(ms.count()) / 100.0f);
+				MyVector& pos = cradleBalls[i].Position;
+				const MyVector& anchor = cradleAnchors[i];
+				MyVector offset = pos - anchor;
+				float dist = offset.Magnitude();
 
-				// Enforce cable length constraint for each ball
-				for (size_t i = 0; i < cradleBalls.size(); ++i)
+				if (dist > CABLE_LENGTH)
 				{
-					MyVector& pos = cradleBalls[i].Position;
-					const MyVector& anchor = cradleAnchors[i];
-					MyVector offset = pos - anchor;
-					float dist = offset.Magnitude();
-					if (dist > CABLE_LENGTH)
-					{
-						MyVector direction = offset.normalize();
-						pos = anchor + direction * CABLE_LENGTH;
-						MyVector& vel = cradleBalls[i].Velocity;
-						float velAlongCable = vel.ScalarProduct(direction);
-						if (velAlongCable > 0)
-							vel -= direction * velAlongCable;
-					}
+					MyVector direction = offset.normalize();
+					pos = anchor + direction * CABLE_LENGTH;
+					MyVector& vel = cradleBalls[i].Velocity;
+					float velAlongCable = vel.ScalarProduct(direction);
+					if (velAlongCable > 0)
+						vel -= direction * velAlongCable;
 				}
+			}
 
-				 // Collision handling with multiple iterations
-				const int collisionIterations = 5; // More iterations for better propagation
-				for (int iter = 0; iter < collisionIterations; ++iter)
+			 // Collision handling with multiple iterations
+			const int collisionIterations = 5;
+			for (int iter = 0; iter < collisionIterations; ++iter)
+			{
+				for (int i = 0; i < NUM_BALLS - 1; ++i)
 				{
-					for (int i = 0; i < NUM_BALLS - 1; ++i)
+					float minDist = 2.0f * BALL_RADIUS;
+					MyVector delta = cradleBalls[i + 1].Position - cradleBalls[i].Position;
+					float dist = delta.Magnitude();
+					if (dist < minDist)
 					{
-						float minDist = 2.0f * BALL_RADIUS;
-						MyVector delta = cradleBalls[i + 1].Position - cradleBalls[i].Position;
-						float dist = delta.Magnitude();
-						if (dist < minDist)
+						MyVector collisionNormal = delta.normalize();
+						float v1 = cradleBalls[i].Velocity.ScalarProduct(collisionNormal);
+						float v2 = cradleBalls[i + 1].Velocity.ScalarProduct(collisionNormal);
+
+						float restitution = 0.9f; 
+
+						// Only transfer if balls are moving towards each other
+						if (v1 > v2)
 						{
-							MyVector collisionNormal = delta.normalize();
-							float v1 = cradleBalls[i].Velocity.ScalarProduct(collisionNormal);
-							float v2 = cradleBalls[i + 1].Velocity.ScalarProduct(collisionNormal);
+							// Calculate new velocities (1D elastic collision, equal mass)
+							float v1After = v2;
+							float v2After = v1;
 
-							float restitution = 0.99f; // Nearly elastic
-
-							// Only transfer if balls are moving towards each other
-							if (v1 > v2)
-							{
-								// Calculate new velocities (1D elastic collision, equal mass)
-								float v1After = v2;
-								float v2After = v1;
-
-								cradleBalls[i].Velocity += (v1After - v1) * collisionNormal * restitution;
-								cradleBalls[i + 1].Velocity += (v2After - v2) * collisionNormal * restitution;
-							}
-
-							// Separate the balls so they are not overlapping
-							float overlap = minDist - dist;
-							cradleBalls[i].Position -= collisionNormal * (overlap * 0.5f);
-							cradleBalls[i + 1].Position += collisionNormal * (overlap * 0.5f);
+							cradleBalls[i].Velocity += (v1After - v1) * collisionNormal * restitution;
+							cradleBalls[i + 1].Velocity += (v2After - v2) * collisionNormal * restitution;
 						}
+
+						// Separate the balls so they are not overlapping
+						float overlap = minDist - dist;
+						cradleBalls[i].Position -= collisionNormal * (overlap * 0.5f);
+						cradleBalls[i + 1].Position += collisionNormal * (overlap * 0.5f);
 					}
 				}
 			}
@@ -332,10 +347,11 @@ int main()
 			prev_time = curr_time;
 		}
 
-		// Apply force only once when space is pressed
+		// Apply force when space is pressed
 		if (applyForceNextFrame && !forceApplied)
 		{
-			cradleBalls[0].AddForce(MyVector(applyForce, 0.0f, 0.0f));
+			// Apply a leftward force to the leftmost particle
+			cradleBalls[0].AddForce(MyVector(-std::abs(forceX), forceY, forceZ));
 			forceApplied = true;
 			applyForceNextFrame = false;
 		}
@@ -382,18 +398,17 @@ int main()
 			model = glm::rotate(model, glm::radians(thetha), glm::vec3(axis_x, axis_y, axis_z));
 			model = glm::scale(model, glm::vec3(scale, scale, scale));
 
-			// Set MVP for the particle
+
 			glm::mat4 mvp = projection * view * model;
 			GLint mvpLoc = glGetUniformLocation(shaderProgram, "MVP");
 			glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, glm::value_ptr(mvp));
 
 			(*i)->Draw(shaderProgram, mvp);
 
-			// Set MVP for the line
 			glm::mat4 mvpLine = projection * view;
 			glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, glm::value_ptr(mvpLine));
 
-			// Draw the link (line) to the anchor
+			// Draw the cable to the anchor
 			if (ballIndex < cradleAnchors.size())
 			{
 				MyVector anchorPos = cradleAnchors[ballIndex];
@@ -406,6 +421,8 @@ int main()
 			}
 			ballIndex++;
 		}
+
+		
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
